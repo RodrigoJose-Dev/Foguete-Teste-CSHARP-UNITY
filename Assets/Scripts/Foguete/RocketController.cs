@@ -9,14 +9,13 @@ public class RocketController : MonoBehaviour
     /// <summary>
     /// Controle do Foguete
     /// </summary>
-    
-    //idéia: usar o rigidbody add force pra mover o foguete
-            
+                
     [Header("Config Teclado")] //escolher tecla do motor
     [SerializeField] KeyCode engineStartKey = KeyCode.Space;
+    [SerializeField] KeyCode changeRocketPosKey = KeyCode.Q;
 
     [Header("Base do Foguete")]
-    [SerializeField] float dragForce = 20f;
+    [SerializeField] float dragForce = 1f;
     [SerializeField] float moveSpeed = 10f;
     private float horizontal;
     private float vertical;
@@ -46,13 +45,21 @@ public class RocketController : MonoBehaviour
 
     //autorizar lançamento
     private bool startEngine = false;
+
+    //Efeitos
+    private ParticleSystem effectPS;
     
     private void Awake()
     {
+        //gameobjects
         baseGO = GameObject.Find("PrimeiroEstagio");
         pontaGO = GameObject.Find("Corpo_Nariz");
         heightDetectorGO = GameObject.Find("HeightDetector");
         parachuteGO = GameObject.Find("Paraquedas");
+        
+        //efeitos
+        effectPS = GetComponentInChildren<ParticleSystem>();
+
     }
 
     private void Start()
@@ -74,18 +81,20 @@ public class RocketController : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log(timer);
         EngineStarting();
+        CameraManager.Instance.ChangeCam();
 
-        #region Entrada do controle do foguete
+        #region Entrada do controle do foguete (input rocket)
         horizontal = Input.GetAxisRaw("Horizontal") * moveSpeed;
         vertical = Input.GetAxisRaw("Vertical") * moveSpeed;
 
-        move = baseGO.transform.right * horizontal + baseGO.transform.forward * vertical;
+        move = baseGO.transform.right * horizontal - baseGO.transform.up * vertical;
         
         #endregion
 
-
     }
+    
 
     void EngineStarting()
     {
@@ -95,6 +104,8 @@ public class RocketController : MonoBehaviour
             if(startEngine == false)
             {
                 startEngine = true;
+                effectPS.Play();
+                SoundManager.Instance.StartRocketAudio();
             }
         }
     }
@@ -109,6 +120,8 @@ public class RocketController : MonoBehaviour
 
             if (timer <= 0)
             {
+                effectPS.Stop();
+                SoundManager.Instance.StopRocketAudio();
                 rbBase.AddForce(Vector3.up * 0);
                 rbPonta.AddForce(Vector3.up * 0);
             }
@@ -155,4 +168,13 @@ public class RocketController : MonoBehaviour
         rbBase.velocity = new Vector3(move.x, rbBase.velocity.y, move.z);
     }
     
+    void ChangeRocketPosition()
+    {
+        if (Input.GetKeyDown(changeRocketPosKey))
+        {
+            //pontaGO
+            //baseGO.transform.rotation = new Vector3(-38738, 90, -90);
+
+        }
+    }
 }
