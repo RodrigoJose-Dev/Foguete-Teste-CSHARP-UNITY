@@ -48,6 +48,9 @@ public class RocketController : MonoBehaviour
 
     //Efeitos
     private ParticleSystem effectPS;
+
+    //alterar tipo de lançamento
+    private bool ballisticLaunch = false;
     
     private void Awake()
     {
@@ -84,17 +87,16 @@ public class RocketController : MonoBehaviour
         Debug.Log(timer);
         EngineStarting();
         CameraManager.Instance.ChangeCam();
-
+        ChangeRocket();
+        
         #region Entrada do controle do foguete (input rocket)
         horizontal = Input.GetAxisRaw("Horizontal") * moveSpeed;
         vertical = Input.GetAxisRaw("Vertical") * moveSpeed;
 
         move = baseGO.transform.right * horizontal - baseGO.transform.up * vertical;
-        
-        #endregion
 
+        #endregion
     }
-    
 
     void EngineStarting()
     {
@@ -112,20 +114,48 @@ public class RocketController : MonoBehaviour
 
     void EngineRunning()
     {
-        if (startEngine == true && timer > 0)
+        if (ballisticLaunch == false)
         {
-            timer -= Time.fixedDeltaTime;
-            rbBase.AddForce(Vector3.up * rocketForce);
-            rbPonta.AddForce(Vector3.up * rocketForce);
-
-            if (timer <= 0)
+            if (startEngine == true && timer > 0)
             {
-                effectPS.Stop();
-                SoundManager.Instance.StopRocketAudio();
-                rbBase.AddForce(Vector3.up * 0);
-                rbPonta.AddForce(Vector3.up * 0);
+                timer -= Time.fixedDeltaTime;
+                rbBase.AddForce(Vector3.up * rocketForce);
+                rbPonta.AddForce(Vector3.up * rocketForce);
+
+                if (timer <= 0)
+                {
+                    effectPS.Stop();
+                    SoundManager.Instance.StopRocketAudio();
+                    rbBase.AddForce(Vector3.up * 0);
+                    rbPonta.AddForce(Vector3.up * 0);
+                }
             }
         }
+        else
+        {
+            if (startEngine == true && timer > 0)
+            {
+                timer -= Time.fixedDeltaTime;
+
+                rbBase.isKinematic = false;
+                rbPonta.isKinematic = false;
+
+                rbBase.freezeRotation = true;
+                rbPonta.freezeRotation = true;
+                
+                rbBase.AddForce(1f * rocketForce, 1f * rocketForce, 0f);
+               // rbPonta.AddForce(1f * rocketForce, 1f * rocketForce, 0f);
+
+                if (timer <= 0)
+                {
+                    effectPS.Stop();
+                    SoundManager.Instance.StopRocketAudio();
+                    rbBase.AddForce(0f, 0f, 0f);
+                    rbPonta.AddForce(0f, 0f, 0f);
+                }
+            }
+        }
+        
     }
 
     void MaxHeight()
@@ -156,6 +186,11 @@ public class RocketController : MonoBehaviour
         if (parachuteTime <= 0)
         {
             rbBase.drag = dragForce;
+            Vector3 rotation = new Vector3(transform.rotation.x, transform.rotation.y,
+                0f);
+            transform.rotation = Quaternion.Lerp(transform.rotation,
+                Quaternion.Euler(rotation), 0.9f);
+                
             rbBase.freezeRotation = true;
             parachuteGO.SetActive(true);
             RocketMove();
@@ -168,13 +203,23 @@ public class RocketController : MonoBehaviour
         rbBase.velocity = new Vector3(move.x, rbBase.velocity.y, move.z);
     }
     
-    void ChangeRocketPosition()
+    void ChangeRocket()
     {
-        if (Input.GetKeyDown(changeRocketPosKey))
+        if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == false)
         {
-            //pontaGO
-            //baseGO.transform.rotation = new Vector3(-38738, 90, -90);
-
+            rbBase.isKinematic = true;
+            rbPonta.isKinematic = true;
+            gameObject.transform.position = new Vector3(193.61f, 0.94f, 237.3542f);
+            gameObject.transform.eulerAngles = new Vector3(0f, 0f, -53.93f);
+            ballisticLaunch = true;
+        }
+        else if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == true)
+        {
+            rbBase.isKinematic = false;
+            rbPonta.isKinematic = false;
+            gameObject.transform.position = new Vector3(203.7922f, 0.07f, 237.3542f);
+            gameObject.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+            ballisticLaunch = false;
         }
     }
 }
