@@ -51,6 +51,7 @@ public class RocketController : MonoBehaviour
 
     //alterar tipo de lançamento
     private bool ballisticLaunch = false;
+    private bool authorizedLaunch = true;
     
     private void Awake()
     {
@@ -106,6 +107,7 @@ public class RocketController : MonoBehaviour
             if(startEngine == false)
             {
                 startEngine = true;
+                authorizedLaunch = false;
                 effectPS.Play();
                 SoundManager.Instance.StartRocketAudio();
             }
@@ -189,7 +191,7 @@ public class RocketController : MonoBehaviour
             Vector3 rotation = new Vector3(transform.rotation.x, transform.rotation.y,
                 0f);
             transform.rotation = Quaternion.Lerp(transform.rotation,
-                Quaternion.Euler(rotation), 0.9f);
+                Quaternion.Euler(rotation), Time.deltaTime);
                 
             rbBase.freezeRotation = true;
             parachuteGO.SetActive(true);
@@ -205,21 +207,24 @@ public class RocketController : MonoBehaviour
     
     void ChangeRocket()
     {
-        if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == false)
+        if (authorizedLaunch == true)
         {
-            rbBase.isKinematic = true;
-            rbPonta.isKinematic = true;
-            gameObject.transform.position = new Vector3(193.61f, 0.94f, 237.3542f);
-            gameObject.transform.eulerAngles = new Vector3(0f, 0f, -53.93f);
-            ballisticLaunch = true;
-        }
-        else if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == true)
-        {
-            rbBase.isKinematic = false;
-            rbPonta.isKinematic = false;
-            gameObject.transform.position = new Vector3(203.7922f, 0.07f, 237.3542f);
-            gameObject.transform.eulerAngles = new Vector3(0f, 0f, 0f);
-            ballisticLaunch = false;
+            if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == false)
+            {
+                rbBase.isKinematic = true;
+                rbPonta.isKinematic = true;
+                gameObject.transform.position = new Vector3(193.61f, 0.94f, 237.3542f);
+                gameObject.transform.eulerAngles = new Vector3(0f, 0f, -53.93f);
+                ballisticLaunch = true;
+            }
+            else if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == true)
+            {
+                rbBase.isKinematic = false;
+                rbPonta.isKinematic = false;
+                gameObject.transform.position = new Vector3(203.7922f, 0.07f, 237.3542f);
+                gameObject.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+                ballisticLaunch = false;
+            }
         }
     }
 }
