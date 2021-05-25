@@ -16,7 +16,7 @@ public class RocketController : MonoBehaviour
 
     [Header("Base do Foguete")]
     [SerializeField] float dragForce = 1f;
-    [SerializeField] float moveSpeed = 10f;
+    [SerializeField] float moveSpeed = 20f; //velocidade do controle do foguete
     private float horizontal;
     private float vertical;
     private Vector3 move;
@@ -30,7 +30,7 @@ public class RocketController : MonoBehaviour
     private float currentHeight;
 
     [Header("Força do Foguete")]
-    [SerializeField] float rocketForce = 10f;
+    [SerializeField] float rocketForce = 10f; //velocidade do lançamento do foguete
 
     //ponta do foguete
     private GameObject pontaGO;
@@ -38,9 +38,9 @@ public class RocketController : MonoBehaviour
 
     //paraquedas
     private GameObject parachuteGO;
-    private float parachuteTime = 3f;
+    private float parachuteTime = 3f; //tempo para ativar o paraquedas
                     
-    //timer
+    //tempo do combustível
     private float timer = 5f;
 
     //autorizar lançamento
@@ -68,28 +68,24 @@ public class RocketController : MonoBehaviour
 
     private void Start()
     {
+        //rigidbody
         rbBase = baseGO.GetComponent<Rigidbody>();
         rbPonta = pontaGO.GetComponent<Rigidbody>();
+
         parachuteGO.SetActive(false);
     }
 
     private void FixedUpdate()
     {
-        //Debug.Log(timer);
-
-        EngineRunning();
-        MaxHeight();
-        Detach();
-
+        
+        EngineRunning(); //propulsor operando
+        MaxHeight(); //altura máxima
+        Detach(); //separando as 2 partes do foguete
+        
     }
 
     private void Update()
     {
-        Debug.Log(timer);
-        EngineStarting();
-        CameraManager.Instance.ChangeCam();
-        ChangeRocket();
-        
         #region Entrada do controle do foguete (input rocket)
         horizontal = Input.GetAxisRaw("Horizontal") * moveSpeed;
         vertical = Input.GetAxisRaw("Vertical") * moveSpeed;
@@ -97,45 +93,49 @@ public class RocketController : MonoBehaviour
         move = baseGO.transform.right * horizontal - baseGO.transform.up * vertical;
 
         #endregion
+        EngineStarting(); //ligando propulsor
+        CameraManager.Instance.ChangeCam(); //alternar camera
+        ChangeRocketPos(); //alternar tipo de lançamento
+        
+        
     }
 
-    void EngineStarting()
+    void EngineStarting() //ligando o propulsor
     {
 
-        if (Input.GetKeyDown(engineStartKey))
+        if (Input.GetKeyDown(engineStartKey)) //tecla que liga o propulsor
         {
             if(startEngine == false)
             {
                 startEngine = true;
                 authorizedLaunch = false;
-                effectPS.Play();
-                SoundManager.Instance.StartRocketAudio();
+                effectPS.Play(); //ligando efeito do propulsor
+                SoundManager.Instance.StartRocketAudio(); //ligando som do foguete
             }
         }
     }
 
-    void EngineRunning()
+    void EngineRunning() //propulsor operando
     {
         if (ballisticLaunch == false)
-        {
-            if (startEngine == true && timer > 0)
+        {  
+            if (startEngine == true && timer > 0) //alterando força caso o seja um lançamento normal
             {
                 timer -= Time.fixedDeltaTime;
                 rbBase.AddForce(Vector3.up * rocketForce);
                 rbPonta.AddForce(Vector3.up * rocketForce);
 
-                if (timer <= 0)
+                if (timer <= 0)//desligando propulsor após 5 segundos
                 {
                     effectPS.Stop();
                     SoundManager.Instance.StopRocketAudio();
-                    rbBase.AddForce(Vector3.up * 0);
-                    rbPonta.AddForce(Vector3.up * 0);
+                    rbBase.AddForce(0f, 0f, 0f);
                 }
             }
         }
         else
         {
-            if (startEngine == true && timer > 0)
+            if (startEngine == true && timer > 0) //alterando força caso o seja um lançamento balístico
             {
                 timer -= Time.fixedDeltaTime;
 
@@ -146,21 +146,19 @@ public class RocketController : MonoBehaviour
                 rbPonta.freezeRotation = true;
                 
                 rbBase.AddForce(1f * rocketForce, 1f * rocketForce, 0f);
-               // rbPonta.AddForce(1f * rocketForce, 1f * rocketForce, 0f);
-
-                if (timer <= 0)
+               
+                if (timer <= 0)//desligando propulsor após 5 segundos
                 {
                     effectPS.Stop();
                     SoundManager.Instance.StopRocketAudio();
                     rbBase.AddForce(0f, 0f, 0f);
-                    rbPonta.AddForce(0f, 0f, 0f);
                 }
             }
         }
         
     }
 
-    void MaxHeight()
+    void MaxHeight() //Detector de altura máxima
     {
 
         if (rbBase.velocity.y > 0)
@@ -169,10 +167,12 @@ public class RocketController : MonoBehaviour
 
             maxHeightNumberTxt.text = currentHeight.ToString("0m");
         }
+
+
    
     }
 
-    void Detach()
+    void Detach() //Desacoplar as 2 partes do foguete
     {
         if (heightDetectorGO.transform.position.y < currentHeight)
         {
@@ -181,13 +181,13 @@ public class RocketController : MonoBehaviour
         }
     }
 
-    void OpenParachute()
+    void OpenParachute() //paraquedas
     {
         parachuteTime -= Time.fixedDeltaTime;
                 
-        if (parachuteTime <= 0)
+        if (parachuteTime <= 0) //abrindo paraquedas após desacoplar em 3 segundos
         {
-            rbBase.drag = dragForce;
+            rbBase.drag = dragForce; //adicionando drag após o paraquedas aberto
             Vector3 rotation = new Vector3(transform.rotation.x, transform.rotation.y,
                 0f);
             transform.rotation = Quaternion.Lerp(transform.rotation,
@@ -200,15 +200,25 @@ public class RocketController : MonoBehaviour
         
     }
 
-    void RocketMove()
+    void RocketMove() //controlar o foguete após o paraquedas abrir
     {
         rbBase.velocity = new Vector3(move.x, rbBase.velocity.y, move.z);
+        StopMove();
     }
-    
-    void ChangeRocket()
+
+    void StopMove() //parar movimentação do foguete ao chegar no solo
     {
-        if (authorizedLaunch == true)
+        if (rbBase.velocity.y == 0)
         {
+            rbBase.constraints = RigidbodyConstraints.FreezeAll;
+        }
+    }
+
+    void ChangeRocketPos()//alterar o tipo de lançamento
+    {
+        if (authorizedLaunch == true) //se o lançamento estiver autorizado, pode mudar o tipo de lançamento
+        {
+            //lançamento balístico
             if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == false)
             {
                 rbBase.isKinematic = true;
@@ -216,7 +226,7 @@ public class RocketController : MonoBehaviour
                 gameObject.transform.position = new Vector3(193.61f, 0.94f, 237.3542f);
                 gameObject.transform.eulerAngles = new Vector3(0f, 0f, -53.93f);
                 ballisticLaunch = true;
-            }
+            }//lançamento normal
             else if (Input.GetKeyDown(changeRocketPosKey) && ballisticLaunch == true)
             {
                 rbBase.isKinematic = false;

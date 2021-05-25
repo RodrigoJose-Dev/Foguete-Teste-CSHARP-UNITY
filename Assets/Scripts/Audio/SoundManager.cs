@@ -17,12 +17,12 @@ public class SoundManager : MonoBehaviour
         rocketFX = GetComponent<AudioSource>();
     }
 
-    public void StartRocketAudio()
+    public void StartRocketAudio() //reproduzir audio do foguete
     {
         rocketFX.Play();
     }
 
-    public void StopRocketAudio()
+    public void StopRocketAudio() //parar reprodução de audio do foguete
     {
         rocketFX.volume = 0.2f;
         

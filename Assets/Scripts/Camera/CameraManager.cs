@@ -23,7 +23,7 @@ public class CameraManager : MonoBehaviour
             Instance = this;
         }
     }
-    private void Start()
+    private void Start() //começando com camera 1
     {
         cam1.enabled = true;
         cam2.enabled = false;
@@ -31,11 +31,11 @@ public class CameraManager : MonoBehaviour
 
     private void Update()
     {
-        cam1.transform.eulerAngles = new Vector3(0, 0, 0);
+        cam1.transform.eulerAngles = new Vector3(0, 0, 0); //travando camera
         
     }
 
-    public void ChangeCam()
+    public void ChangeCam() //alternar camera
     {
         if (Input.GetKeyDown(changeCameraKey))
         {
